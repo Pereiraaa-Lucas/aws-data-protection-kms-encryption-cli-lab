@@ -20,16 +20,19 @@ O ambiente simula um servidor de arquivos corporativo onde dados confidenciais e
 ## ⚙️ Principais Componentes Implementados
 
 ### 1. Criação e Gestão de Chaves no AWS KMS
+
 - Criação de uma chave **Simétrica** personalizada (`MyKMSKey`) com descrição e escopo de segurança definidos.
 - Concessão de privilégios administrativos e de uso para o perfil do IAM associado ao laboratório (`voclabs`).
 - Extração e armazenamento seguro do **ARN da Chave** (`Key ARN`) para uso nas variáveis de ambiente da CLI.
 
 ### 2. Configuração de Credenciais e Ambiente na Instância
+
 - Configuração do arquivo de credenciais da AWS (`~/.aws/credentials`) na instância do EC2.
 - Instalação do pacote `aws-encryption-sdk-cli` utilizando o gerenciador de pacotes Python (`pip3`).
 - Exportação correta do caminho binário (`PATH`) para execução global dos comandos de criptografia.
 
 ### 3. Criptografia de Dados Sensíveis (`--encrypt`)
+
 - Criação de arquivos de simulação de dados sigilosos (`secret1.txt`, `secret2.txt`, `secret3.txt`).
 - Execução do comando de cifragem utilizando o ARN da chave do KMS e o contexto de criptografia (`purpose=test`):
   - Parâmetro `--commitment-policy require-encrypt-require-decrypt` para reforçar a segurança criptográfica.
@@ -37,6 +40,7 @@ O ambiente simula um servidor de arquivos corporativo onde dados confidenciais e
 - Validação de sucesso por meio do código de retorno do sistema (`echo $?` igual a `0`).
 
 ### 4. Descriptografia e Recuperação de Dados (`--decrypt`)
+
 - Reversão do texto cifrado (`secret1.txt.encrypted`) para texto simples legível utilizando a mesma chave simétrica KMS.
 - Auditoria de integridade do conteúdo descriptografado (`secret1.txt.encrypted.decrypted`).
 
@@ -45,6 +49,7 @@ O ambiente simula um servidor de arquivos corporativo onde dados confidenciais e
 ## 🚀 Passo a Passo da Implementação
 
 ### Passo 1: Criação da Chave Simétrica no AWS KMS
+
 1. No Console da AWS, pesquisar e acessar o **Key Management Service (KMS)**.
 2. Clicar em **Create a key** (*Criar uma chave*).
 3. Selecionar o tipo de chave **Symmetric** (*Simétrica*) e clicar em **Next**.
@@ -55,13 +60,15 @@ O ambiente simula um servidor de arquivos corporativo onde dados confidenciais e
 ### Passo 2: Configuração da Instância do Servidor de Arquivos (EC2 & CLI)
 1. Acessar o console do **Amazon EC2**, selecionar a instância **File Server** e clicar em **Connect** > **Session Manager** > **Connect**.
 2. No terminal, configurar as credenciais temporárias da AWS:
+   
    ```bash
    cd ~
    aws configure
 
    (Inserir 1 para Access Key ID e Secret Access Key, e colar a região padrão obtida no painel de detalhes do laboratório).
-3. Atualizar o arquivo ~/.aws/credentials com as credenciais definitivas fornecidas pelo ambiente.
-4. Instalar a AWS Encryption CLI e ajustar o PATH:
+   
+4. Atualizar o arquivo ~/.aws/credentials com as credenciais definitivas fornecidas pelo ambiente.
+5. Instalar a AWS Encryption CLI e ajustar o PATH:
    
 pip3 install aws-encryption-sdk-cli
 export PATH=$PATH:/home/ssm-user/.local/bin
@@ -74,9 +81,11 @@ echo 'TOP SECRET 1!!!' > secret1.txt
 mkdir output
 
 2. Armazenar o ARN da chave em uma variável de ambiente:
+   
    keyArn="<COLE_O_ARN_DO_KMS_AQUI>"
 
-3.  Executar o comando de criptografia:
+4.  Executar o comando de criptografia:
+   
    aws-encryption-cli --encrypt \
                    --input secret1.txt \
                    --wrapping-keys key=$keyArn \
@@ -85,11 +94,12 @@ mkdir output
                    --commitment-policy require-encrypt-require-decrypt \
                    --output ~/output/.
 
-4. Validar o sucesso da operação (echo $? deve retornar 0) e verificar o arquivo gerado (secret1.txt.encrypted).
+5. Validar o sucesso da operação (echo $? deve retornar 0) e verificar o arquivo gerado (secret1.txt.encrypted).
 
    Passo 4: Descriptografia do Arquivo Cifrado
 
 1. Executar o comando de descriptografia na pasta de saída:
+   
    aws-encryption-cli --decrypt \
                    --input secret1.txt.encrypted \
                    --wrapping-keys key=$keyArn \
@@ -100,7 +110,8 @@ mkdir output
                    --buffer \
                    --output .
 
-2. Visualizar o conteúdo recuperado:
+3. Visualizar o conteúdo recuperado:
+   
    cat secret1.txt.encrypted.decrypted
 
    🛠️ Tecnologias e Ferramentas Utilizadas
