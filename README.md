@@ -59,3 +59,55 @@ O ambiente simula um servidor de arquivos em nuvem que necessita proteger dados 
    ```bash
    cd ~
    aws configure
+
+1. Atualizar o arquivo ~/.aws/credentials com as credenciais fornecidas pelo painel de detalhes do ambiente (incluindo o token de sessão).
+
+2. Instalar a AWS Encryption CLI e atualizar o PATH:
+      ```bash
+      pip3 install aws-encryption-sdk-cli
+      export PATH=$PATH:/home/ssm-user/.local/bin
+
+Passo 3: Criar, Criptografar e Descriptografar Arquivos
+1. Criar os arquivos de texto e definir o conteúdo sensível:
+   ```bash
+         touch secret1.txt secret2.txt secret3.txt
+         echo 'TOP SECRET 1!!!' > secret1.txt
+         mkdir output
+
+ 2. Salvar o ARN da chave em uma variável de ambiente e executar a criptografia:
+     ```bash
+     keyArn="<COLE_SEU_KMS_ARN_AQUI>"
+     aws-encryption-cli --encrypt \
+                   --input secret1.txt \
+                   --wrapping-keys key=$keyArn \
+                   --metadata-output ~/metadata \
+                   --encryption-context purpose=test \
+                   --commitment-policy require-encrypt-require-decrypt \
+                   --output ~/output/.
+
+ 3. Descriptografar o arquivo gerado:
+     ```bash
+     cd output
+     aws-encryption-cli --decrypt \
+                   --input secret1.txt.encrypted \
+                   --wrapping-keys key=$keyArn \
+                   --commitment-policy require-encrypt-require-decrypt \
+                   --encryption-context purpose=test \
+                   --metadata-output ~/metadata \
+                   --max-encrypted-data-keys 1 \
+                   --buffer \
+                   --output .
+
+  🛠️ Tecnologias e Ferramentas Utilizadas
+AWS KMS (Key Management Service): Gerenciamento seguro de chaves criptográficas em módulos HSM validados.
+
+Amazon EC2 & Systems Manager: Computação em nuvem segura e acesso via Session Manager sem portas abertas.
+
+AWS Encryption CLI: Ferramenta de linha de comando para criptografia e integridade de dados baseada no AWS Encryption SDK.
+
+Data Security & Cryptography: Princípios de confidencialidade, chaves simétricas e criptografia em repouso.
+
+👨‍💻 Autor
+Lucas dos Santos Pereira
+
+Estudante de Análise e Desenvolvimento de Sistemas | Focado em Engenharia de Nuvem, Infraestrutura e Segurança da Informação.
