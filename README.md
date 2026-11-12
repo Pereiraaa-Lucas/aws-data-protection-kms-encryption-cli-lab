@@ -64,8 +64,6 @@ O ambiente simula um servidor de arquivos corporativo onde dados confidenciais e
    ```bash
    cd ~
    aws configure
-
-   (Inserir 1 para Access Key ID e Secret Access Key, e colar a região padrão obtida no painel de detalhes do laboratório).
    
 4. Atualizar o arquivo ~/.aws/credentials com as credenciais definitivas fornecidas pelo ambiente.
 5. Instalar a AWS Encryption CLI e ajustar o PATH:
