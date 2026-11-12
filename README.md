@@ -1,103 +1,130 @@
-# 🔐 AWS Data Protection: KMS Key Management & Encryption CLI Lab
+🛡️ AWS Key Management Service & Encryption CLI: Laboratório Prático de Proteção de Dados
+Este repositório documenta a implementação prática de estratégias de Proteção de Dados Usando Criptografia na nuvem AWS. O laboratório aborda a criação de chaves criptográficas gerenciadas por hardware, configuração de credenciais em ambiente de servidor de arquivos via Amazon EC2 e AWS Systems Manager (Session Manager), além da utilização da AWS Encryption CLI para cifrar e decifrar arquivos de texto confidencial de maneira segura.
 
-Este repositório documenta a implementação prática de estratégias avançadas de **Proteção de Dados e Criptografia em Nuvem** utilizando o **AWS Key Management Service (AWS KMS)** e a **AWS Encryption Command Line Interface (CLI)** em um ambiente corporativo simulado no **Amazon EC2**.
+🏗️ Arquitetura e Cenário do Laboratório
+O ambiente simula um servidor de arquivos em nuvem que exige forte proteção de dados em repouso por meio de criptografia simétrica validada por padrões de segurança.
 
-O projeto demonstra a capacidade de criar, governar e utilizar chaves criptográficas simétricas gerenciadas por hardware (**HSMs FIPS 140-2**), executando operações locais de cifra e decifra para garantir a confidencialidade e a integridade de dados sensíveis.
+Infraestrutura Gerenciada: Instância do Amazon EC2 configurada como File Server.
 
----
+Camada de Criptografia: AWS Key Management Service (AWS KMS) para gerenciamento seguro de chaves simétricas protegidas por módulos de segurança de hardware (HSMs) validados pelo padrão FIPS 140-2.
 
-## 🏗️ Arquitetura e Cenário do Laboratório
+Ferramenta de Linha de Comando: AWS Encryption CLI (aws-encryption-sdk-cli) para automação de processos de criptografia e descriptografia diretamente no terminal.
 
-O ambiente simula um servidor de arquivos corporativo onde chaves criptográficas controlam estritamente o acesso a dados confidenciais.
+⚙️ Principais Componentes Implementados
+1. Criação e Gestão de Chaves no AWS KMS (MyKMSKey)
+Configuração de uma chave de criptografia Simétrica, otimizada para eficiência e desempenho em operações de cifra e decifra.
 
-- **Servidor Gerenciado:** Instância **Amazon EC2** (`File Server`) acessada de forma segura via **AWS Systems Manager Session Manager**.
-- **Serviço de Chaves:** **AWS KMS** (**Key Management Service**) para gerenciamento centralizado de chaves simétricas.
-- **Ferramenta de Criptografia:** **AWS Encryption CLI** (`aws-encryption-sdk-cli`) instalada no ambiente Linux para operações de conversão de dados.
+Atribuição de permissões administrativas e de uso para o perfil do IAM (voclabs) associado ao laboratório.
 
----
+Geração e salvamento do ARN (Amazon Resource Name) da chave para referência em variáveis de ambiente.
 
-## ⚙️ Principais Componentes Implementados
+2. Configuração do Ambiente no Amazon EC2
+Acesso seguro ao terminal da instância do File Server utilizando o AWS Systems Manager (Session Manager).
 
-### 1. Criação de Chave Simétrica no AWS KMS
-- **Tipo de Chave:** **Simétrica** (utiliza a mesma chave para criptografar e descriptografar, garantindo máxima performance e eficiência).
-- **Alias e Identificação:** `MyKMSKey` associada ao seu respectivo **ARN** (*Amazon Resource Name*).
-- **Governança de Permissões:** Concessão de controle administrativo e de uso ao perfil de **IAM** do laboratório (`voclabs`).
+Configuração inicial do arquivo de credenciais da AWS (~/.aws/credentials) injetando as credenciais temporárias do ambiente do laboratório (Access Key ID, Secret Access Key e Session Token).
 
-### 2. Configuração do Servidor de Arquivos e Credenciais
-- Configuração segura das credenciais temporárias da AWS (`~/.aws/credentials`) na instância do EC2.
-- Instalação do utilitário **AWS Encryption CLI** via `pip3` e exportação do executável para o caminho do sistema (`PATH`).
+Instalação do pacote Python via pip3 para a AWS Encryption CLI (aws-encryption-sdk-cli) e exportação do caminho binário para o PATH do sistema.
 
-### 3. Criptografia de Dados (Plaintext para Ciphertext)
-- Criação de arquivos de texto simulando dados confidenciais (`secret1.txt`, `secret2.txt`, `secret3.txt`).
-- Execução do comando de criptografia utilizando o ARN da chave do KMS, contexto de criptografia e política de confirmação de chave:
-  ```bash
-  aws-encryption-cli --encrypt \
-                      --input secret1.txt \
-                      --wrapping-keys key=$keyArn \
-                      --metadata-output ~/metadata \
-                      --encryption-context purpose=test \
-                      --commitment-policy require-encrypt-require-decrypt \
-                      --output ~/output/.
-  ```
-- Validação do sucesso da operação (`echo $?` igual a `0`) e inspeção do arquivo cifrado gerado (`secret1.txt.encrypted`).
+3. Criptografia de Dados em Texto Simples (Plaintext ➔ CipherText)
+Criação de arquivos de simulação de dados confidenciais (secret1.txt, secret2.txt, secret3.txt).
 
-### 4. Descriptografia e Recuperação de Dados
-- Execução do comando de decifra para reverter o texto cifrado de volta ao formato original legível:
-  ```bash
-  aws-encryption-cli --decrypt \
-                      --input secret1.txt.encrypted \
-                      --wrapping-keys key=$keyArn \
-                      --commitment-policy require-encrypt-require-decrypt \
-                      --encryption-context purpose=test \
-                      --metadata-output ~/metadata \
-                      --max-encrypted-data-keys 1 \
-                      --buffer \
-                      --output .
-  ```
-- Validação do conteúdo original recuperado com sucesso em `secret1.txt.encrypted.decrypted`.
+Execução do comando aws-encryption-cli --encrypt utilizando parâmetros avançados de segurança:
 
----
+Contexto de Criptografia: Adição de metadados de integridade associados (purpose=test).
 
-## 🚀 Passo a Passo da Implementação
+Política de Compromisso (Commitment Policy): Exigência de políticas robustas de confirmação de chave (require-encrypt-require-decrypt).
 
-### Passo 1: Criação da Chave no AWS KMS
-1. No console da AWS, acessar o **Key Management Service (KMS)**.
-2. Criar uma nova chave do tipo **Symmetric**.
-3. Atribuir o alias `MyKMSKey` e a descrição `Key used to encrypt and decrypt data files`.
-4. Definir as permissões administrativas e de uso para o perfil `voclabs`.
-5. Copiar o **ARN da chave** gerado para utilização nas etapas seguintes.
+Isolamento de Saída: Gravação do arquivo criptografado (secret1.txt.encrypted) no diretório dedicado output/.
 
-### Passo 2: Configuração da Instância File Server
-1. Acessar o console do **Amazon EC2**, selecionar a instância **File Server** e conectar via **AWS Systems Manager Session Manager**.
-2. Configurar as credenciais temporárias da AWS em `~/.aws/credentials` utilizando as chaves de acesso e token fornecidos pelo ambiente Vocareum.
-3. Instalar a CLI de criptografia:
-   ```bash
-   pip3 install aws-encryption-sdk-cli
-   export PATH=$PATH:/home/ssm-user/.local/bin
-   ```
+4. Descriptografia e Recuperação de Dados (CipherText ➔ Plaintext)
+Execução do comando inverso aws-encryption-cli --decrypt utilizando a mesma chave KMS e o contexto de criptografia correspondente.
 
-### Passo 3: Operações de Criptografia e Descriptografia
-1. Criar os arquivos de teste e definir o conteúdo sigiloso em `secret1.txt`:
-   ```bash
-   touch secret1.txt secret2.txt secret3.txt
-   echo 'TOP SECRET 1!!!' > secret1.txt
-   ```
-2. Salvar o ARN da chave KMS em uma variável de ambiente: `keyArn=<SEU_ARN_KMS>`.
-3. Executar o comando `aws-encryption-cli --encrypt` para gerar o arquivo cifrado na pasta `output/`.
-4. Executar o comando `aws-encryption-cli --decrypt` para restaurar o documento original e validar o conteúdo com `cat`.
+Validação do arquivo resultante (secret1.txt.encrypted.decrypted) e leitura do conteúdo original em texto simples via comandos nativos de terminal (cat).
 
----
+🚀 Passo a Passo da Implementação
+Passo 1: Criação da Chave Simétrica no AWS KMS
+No console da AWS, pesquise por KMS e acesse o Key Management Service.
 
-## 🛠️ Tecnologias e Ferramentas Utilizadas
+Clique em Create a key (Criar uma chave).
 
-- **AWS EC2 (File Server):** Infraestrutura computacional para processamento local.
-- **AWS KMS:** Serviço seguro de gestão de chaves criptográficas validadas por padrões **FIPS 140-2**.
-- **AWS Encryption CLI:** Utilitário de linha de comando para segurança baseada em criptografia.
-- **AWS Systems Manager (Session Manager):** Acesso remoto seguro via shell sem necessidade de portas SSH abertas.
+Selecione o tipo Symmetric (Simétrica) e clique em Next.
 
----
+Configure os rótulos da chave:
 
-## 👨‍💻 Autor
+Alias: MyKMSKey
 
-**Lucas dos Santos Pereira**  
-*Estudante de Análise e Desenvolvimento de Sistemas | Focado em Engenharia de Nuvem, Infraestrutura e Automação.*
+Description: Key used to encrypt and decrypt data files.
+
+Selecione as permissões administrativas e de uso para o perfil voclabs.
+
+Revise as configurações, clique em Finish e copie o ARN da chave criada para um editor de texto.
+
+Passo 2: Configuração da Instância do Servidor de Arquivos
+Acesse o console do Amazon EC2, selecione a instância File Server, clique em Connect e utilize a guia Session Manager.
+
+No terminal, configure o arquivo de credenciais com as chaves fornecidas no ambiente Vocareum:
+
+```Bash
+cd ~
+vi ~/.aws/credentials
+
+Substitua o conteúdo pelo bloco de credenciais padrão ([default] contendo aws_access_key_id, aws_secret_access_key e aws_session_token) e salve o arquivo (:wq).
+
+Instale a AWS Encryption CLI e atualize o caminho do sistema:
+
+```Bash
+pip3 install aws-encryption-sdk-cli
+export PATH=$PATH:/home/ssm-user/.local/bin
+
+Passo 3: Criptografia de Dados Sensíveis
+Crie os arquivos de texto e insira dados confidenciais:
+
+```Bash
+touch secret1.txt secret2.txt secret3.txt
+echo 'TOP SECRET 1!!!' > secret1.txt
+mkdir output
+Defina a variável de ambiente com o ARN da chave KMS e execute a criptografia:
+
+```Bash
+keyArn="<COLE_O_ARN_DA_SUA_CHAVE_AQUI>"
+
+aws-encryption-cli --encrypt \
+                   --input secret1.txt \
+                   --wrapping-keys key=$keyArn \
+                   --metadata-output ~/metadata \
+                   --encryption-context purpose=test \
+                   --commitment-policy require-encrypt-require-decrypt \
+                   --output ~/output/.
+Validere o sucesso da operação (echo $? retornando 0) e verifique o arquivo gerado em output/secret1.txt.encrypted.
+
+Passo 4: Descriptografia e Validação do Conteúdo
+Execute o comando de descriptografia apontando para o arquivo cifrado:
+
+````Bash
+aws-encryption-cli --decrypt \
+                   --input secret1.txt.encrypted \
+                   --wrapping-keys key=$keyArn \
+                   --commitment-policy require-encrypt-require-decrypt \
+                   --encryption-context purpose=test \
+                   --metadata-output ~/metadata \
+                   --max-encrypted-data-keys 1 \
+                   --buffer \
+                   --output .
+Visualize o conteúdo recuperado para garantir a integridade dos dados:
+
+```Bash
+cat secret1.txt.encrypted.decrypted
+
+🛠️ Tecnologias e Ferramentas Utilizadas
+Amazon EC2: Servidor de arquivos virtualizado em ambiente Linux.
+
+AWS Key Management Service (AWS KMS): Gestão segura de chaves criptográficas com suporte a HSM.
+
+AWS Systems Manager (Session Manager): Conexão segura e interativa via terminal sem necessidade de portas SSH abertas.
+
+AWS Encryption CLI: Ferramenta de linha de comando para operações de criptografia e proteção de dados baseadas no AWS Encryption SDK.
+
+👨‍💻 Autor
+Lucas dos Santos Pereira
+
+Estudante de Análise e Desenvolvimento de Sistemas | Focado em Engenharia de Nuvem, Infraestrutura e Segurança da Informação.
